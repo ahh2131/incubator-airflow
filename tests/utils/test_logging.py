@@ -29,9 +29,6 @@ class TestS3Log(unittest.TestCase):
         self.hook_patcher = mock.patch("airflow.hooks.S3_hook.S3Hook")
         self.hook_mock = self.hook_patcher.start()
         self.hook_inst_mock = self.hook_mock.return_value
-        self.hook_key_mock = self.hook_inst_mock.get_key.return_value
-        self.hook_key_mock.get_contents_as_string.return_value.decode.\
-            return_value = 'content'
         self.logging_patcher = mock.patch("airflow.utils.logging.logging")
         self.logging_mock = self.logging_patcher.start()
 
@@ -55,12 +52,8 @@ class TestS3Log(unittest.TestCase):
     def test_log_exists(self):
         self.assertTrue(logging.S3Log().log_exists(self.remote_log_location))
 
-    def test_log_exists_none(self):
-        self.hook_inst_mock.get_key.return_value = None
-        self.assertFalse(logging.S3Log().log_exists(self.remote_log_location))
-
-    def test_log_exists_raises(self):
-        self.hook_inst_mock.get_key.side_effect = Exception('error')
+    def test_log_exists_false(self):
+        self.hook_inst_mock.check_for_key.return_value = False
         self.assertFalse(logging.S3Log().log_exists(self.remote_log_location))
 
     def test_log_exists_no_hook(self):
@@ -68,19 +61,20 @@ class TestS3Log(unittest.TestCase):
         self.assertFalse(logging.S3Log().log_exists(self.remote_log_location))
 
     def test_read(self):
+        self.hook_inst_mock.read_key.return_value = 'content'
         self.assertEqual(logging.S3Log().read(self.remote_log_location),
                          'content')
 
     def test_read_key_empty(self):
-        self.hook_inst_mock.get_key.return_value = None
+        self.hook_inst_mock.read_key.return_value = ''
         self.assertEqual(logging.S3Log().read(self.remote_log_location), '')
 
     def test_read_raises(self):
-        self.hook_inst_mock.get_key.side_effect = Exception('error')
+        self.hook_inst_mock.read_key.side_effect = Exception('error')
         self.assertEqual(logging.S3Log().read(self.remote_log_location), '')
 
     def test_read_raises_return_error(self):
-        self.hook_inst_mock.get_key.side_effect = Exception('error')
+        self.hook_inst_mock.read_key.side_effect = Exception('error')
         result = logging.S3Log().read(self.remote_log_location,
                                       return_error=True)
         msg = 'Could not read logs from %s' % self.remote_log_location
@@ -88,6 +82,7 @@ class TestS3Log(unittest.TestCase):
         self.logging_mock.error.assert_called_once_with(msg)
 
     def test_write(self):
+        self.hook_inst_mock.read_key.return_value = 'content'
         logging.S3Log().write('text', self.remote_log_location)
         self.hook_inst_mock.load_string.assert_called_once_with(
             'content\ntext',
@@ -97,6 +92,7 @@ class TestS3Log(unittest.TestCase):
         )
 
     def test_write_raises(self):
+        self.hook_inst_mock.read_key.return_value = ''
         self.hook_inst_mock.load_string.side_effect = Exception('error')
         logging.S3Log().write('text', self.remote_log_location)
         msg = 'Could not write logs to %s' % self.remote_log_location

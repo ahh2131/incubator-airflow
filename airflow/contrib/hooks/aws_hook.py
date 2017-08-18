@@ -26,8 +26,8 @@ class AwsHook(BaseHook):
     """
     def __init__(self, aws_conn_id='aws_default'):
         self.aws_conn_id = aws_conn_id
-
-    def get_client_type(self, client_type, region_name=None):
+    
+    def _get_credentials(self, region_name):
         try:
             connection_object = self.get_connection(self.aws_conn_id)
             aws_access_key_id = connection_object.login
@@ -41,6 +41,12 @@ class AwsHook(BaseHook):
             # http://boto3.readthedocs.io/en/latest/guide/configuration.html
             aws_access_key_id = None
             aws_secret_access_key = None
+        
+        return aws_access_key_id, aws_secret_access_key, region_name
+
+    def get_client_type(self, client_type, region_name=None):
+        aws_access_key_id, aws_secret_access_key, region_name = \
+            self._get_credentials(region_name)
 
         return boto3.client(
             client_type,
@@ -48,3 +54,16 @@ class AwsHook(BaseHook):
             aws_access_key_id=aws_access_key_id,
             aws_secret_access_key=aws_secret_access_key
         )
+
+    def get_resource_type(self, resource_type, region_name=None):
+        aws_access_key_id, aws_secret_access_key, region_name = \
+            self._get_credentials(region_name)
+        
+        return boto3.resource(
+            resource_type,
+            region_name=region_name,
+            aws_access_key_id=aws_access_key_id,
+            aws_secret_access_key=aws_secret_access_key
+        )
+        
+        

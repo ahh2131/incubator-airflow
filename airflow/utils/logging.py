@@ -61,6 +61,7 @@ class S3Log(object):
         remote_conn_id = configuration.get('core', 'REMOTE_LOG_CONN_ID')
         try:
             from airflow.hooks.S3_hook import S3Hook
+            
             self.hook = S3Hook(remote_conn_id)
         except:
             self.hook = None
@@ -76,10 +77,7 @@ class S3Log(object):
         :return: True if location exists else False
         """
         if self.hook:
-            try:
-                return self.hook.get_key(remote_log_location) is not None
-            except Exception:
-                pass
+            return self.hook.check_for_key(remote_log_location)
         return False
 
     def read(self, remote_log_location, return_error=False):
@@ -95,9 +93,7 @@ class S3Log(object):
         """
         if self.hook:
             try:
-                s3_key = self.hook.get_key(remote_log_location)
-                if s3_key:
-                    return s3_key.get_contents_as_string().decode()
+                return self.hook.read_key(remote_log_location)
             except:
                 pass
 
