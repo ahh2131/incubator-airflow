@@ -248,6 +248,21 @@ class S3Hook(BaseHook):
         keylist = list(b.list(prefix=prefix, delimiter=delimiter))
         return [k.name for k in keylist] if keylist != [] else None
 
+    # TODO: add additional parameters
+    # http://boto3.readthedocs.io/en/latest/reference/services/s3.html#S3.Client.list_objects_v2
+    def list_objects(self, bucket_name, prefix='', delimiter=''):
+        """
+        Lists objects in a bucket under prefict and not containing delimiter
+
+        :param bucket_name: the name of the bucket
+        :type bucket_name: str
+        :param prefix: a key prefix
+        :type prefix: str
+        :param delimiter: the delimiter marks key hierarchy.
+        :type delimiter: str
+        """
+        print "Tests"
+
     def list_prefixes(self, bucket_name, prefix='', delimiter=''):
         """
         Lists prefixes in a bucket under prefix
