@@ -252,7 +252,7 @@ class S3Hook(BaseHook):
     # http://boto3.readthedocs.io/en/latest/reference/services/s3.html#S3.Client.list_objects_v2
     def list_objects(self, bucket_name, prefix='', delimiter=''):
         """
-        Lists objects in a bucket under prefict and not containing delimiter
+        Lists objects in a bucket under prefix and not containing delimiter
 
         :param bucket_name: the name of the bucket
         :type bucket_name: str
@@ -263,6 +263,18 @@ class S3Hook(BaseHook):
         """
         test = "test"
 
+    # TODO: complete
+    # http://boto3.readthedocs.io/en/latest/reference/services/s3.html#S3.Client.delete_object
+    def delete_object(self, bucket_name, key):
+        """
+        Deletes an object in a bucket with a key
+
+        :param bucket_name: the name of the bucket
+        :type bucket_name: str
+        :param key: the path to the key
+        :type key: str
+        """
+        test = "test"
 
     def list_prefixes(self, bucket_name, prefix='', delimiter=''):
         """
