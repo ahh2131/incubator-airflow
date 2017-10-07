@@ -261,7 +261,8 @@ class S3Hook(BaseHook):
         :param delimiter: the delimiter marks key hierarchy.
         :type delimiter: str
         """
-        print "Tests"
+        test = "test"
+
 
     def list_prefixes(self, bucket_name, prefix='', delimiter=''):
         """
