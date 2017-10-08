@@ -101,7 +101,7 @@ class S3Hook(AwsHook):
         response = self.get_conn().list_objects_v2(Bucket=bucket_name,
                                                    Prefix=prefix,
                                                    Delimiter=delimiter)
-        return response if response.get('Contents') else None
+        return response.get('Contents') if response.get('Contents') else None
 
     def list_keys(self, bucket_name, prefix='', delimiter=''):
         """
