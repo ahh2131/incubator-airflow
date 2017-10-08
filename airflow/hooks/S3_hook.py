@@ -103,6 +103,19 @@ class S3Hook(AwsHook):
                                                    Delimiter=delimiter)
         return response.get('Contents') if response.get('Contents') else None
 
+    def delete_object(self, bucket_name, key):
+        """
+        Removes the null version of an object and inserts a delete marker
+
+        :param bucket_name: the name of the bucket
+        :type bucket_name: str
+        :param key: S3 key that will point to the file
+        :type key: str
+        """
+        response = self.get_conn().delete_object(Bucket=bucket_name,
+                                                 Key=key)
+        return response['DeleteMarker'] if response.get('DeleteMarker') else None
+
     def list_keys(self, bucket_name, prefix='', delimiter=''):
         """
         Lists keys in a bucket under prefix and not containing delimiter
