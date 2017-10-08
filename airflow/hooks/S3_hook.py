@@ -27,7 +27,7 @@ class S3Hook(AwsHook):
 
     def get_conn(self):
         return self.get_client_type('s3')
-    
+
     @staticmethod
     def parse_s3_url(s3url):
         parsed_url = urlparse(s3url)
@@ -37,7 +37,7 @@ class S3Hook(AwsHook):
             bucket_name = parsed_url.netloc
             key = parsed_url.path.strip('/')
             return (bucket_name, key)
-        
+
     def check_for_bucket(self, bucket_name):
         """
         Check if bucket_name exists.
@@ -50,7 +50,7 @@ class S3Hook(AwsHook):
             return True
         except:
             return False
-    
+
     def get_bucket(self, bucket_name):
         """
         Returns a boto3.S3.Bucket object
@@ -69,7 +69,7 @@ class S3Hook(AwsHook):
         prefix_split = re.split(r'(\w+[{d}])$'.format(d=delimiter), prefix, 1)
         previous_level = prefix_split[0]
         plist = self.list_prefixes(bucket_name, previous_level, delimiter)
-        return False if plist is None else prefix in plist        
+        return False if plist is None else prefix in plist
 
     def list_prefixes(self, bucket_name, prefix='', delimiter=''):
         """
@@ -82,11 +82,27 @@ class S3Hook(AwsHook):
         :param delimiter: the delimiter marks key hierarchy.
         :type delimiter: str
         """
-        response = self.get_conn().list_objects_v2(Bucket=bucket_name, 
-                                                   Prefix=prefix, 
+        response = self.get_conn().list_objects_v2(Bucket=bucket_name,
+                                                   Prefix=prefix,
                                                    Delimiter=delimiter)
         return [p.Prefix for p in response['CommonPrefixes']] if response.get('CommonPrefixes') else None
-    
+
+    def list_objects(self, bucket_name, prefix='', delimiter=''):
+        """
+        Lists prefixes in a bucket under prefix
+
+        :param bucket_name: the name of the bucket
+        :type bucket_name: str
+        :param prefix: a key prefix
+        :type prefix: str
+        :param delimiter: the delimiter marks key hierarchy.
+        :type delimiter: str
+        """
+        response = self.get_conn().list_objects_v2(Bucket=bucket_name,
+                                                   Prefix=prefix,
+                                                   Delimiter=delimiter)
+        return response if response.get('Contents') else None
+
     def list_keys(self, bucket_name, prefix='', delimiter=''):
         """
         Lists keys in a bucket under prefix and not containing delimiter
@@ -98,11 +114,11 @@ class S3Hook(AwsHook):
         :param delimiter: the delimiter marks key hierarchy.
         :type delimiter: str
         """
-        response = self.get_conn().list_objects_v2(Bucket=bucket_name, 
-                                                   Prefix=prefix, 
+        response = self.get_conn().list_objects_v2(Bucket=bucket_name,
+                                                   Prefix=prefix,
                                                    Delimiter=delimiter)
         return [k.Key for k in response['Contents']] if response.get('Contents') else None
-    
+
     def check_for_key(self, key, bucket_name=None):
         """
         Checks if a key exists in a bucket
@@ -114,13 +130,13 @@ class S3Hook(AwsHook):
         """
         if not bucket_name:
             (bucket_name, key) = self.parse_s3_url(key)
-        
+
         try:
             self.get_conn().head_object(Bucket=bucket_name, Key=key)
             return True
         except:
             return False
-        
+
     def get_key(self, key, bucket_name=None):
         """
         Returns a boto3.S3.Key object
@@ -132,7 +148,7 @@ class S3Hook(AwsHook):
         """
         if not bucket_name:
             (bucket_name, key) = self.parse_s3_url(key)
-            
+
         return self.get_conn().get_object(Bucket=bucket_name, Key=key)
 
     def read_key(self, key, bucket_name=None):
@@ -144,9 +160,9 @@ class S3Hook(AwsHook):
         :param bucket_name: Name of the bucket in which the file is stored
         :type bucket_name: str
         """
-        
+
         obj = self.get_key(key, bucket_name)
-        return obj['Body'].read().decode('utf-8')    
+        return obj['Body'].read().decode('utf-8')
 
     def check_for_wildcard_key(self,
                                wildcard_key, bucket_name=None, delimiter=''):
@@ -168,14 +184,14 @@ class S3Hook(AwsHook):
         """
         if not bucket_name:
             (bucket_name, wildcard_key) = self.parse_s3_url(wildcard_key)
-        
+
         prefix = re.split(r'[*]', wildcard_key, 1)[0]
         klist = self.list_keys(bucket_name, prefix=prefix, delimiter=delimiter)
         if klist:
             key_matches = [k for k in klist if fnmatch.fnmatch(k, wildcard_key)]
             if key_matches:
                 return self.get_key(key_matches[0], bucket_name)
-    
+
     def load_file(self,
                   filename,
                   key,
@@ -201,20 +217,20 @@ class S3Hook(AwsHook):
         """
         if not bucket_name:
             (bucket_name, key) = self.parse_s3_url(key)
-        
+
         if not replace and self.check_for_key(key, bucket_name):
             raise ValueError("The key {key} already exists.".format(key=key))
-        
+
         extra_args={}
         if encrypt:
             extra_args['ServerSideEncryption'] = "AES256"
-        
+
         client = self.get_conn()
         client.upload_file(filename, bucket_name, key, ExtraArgs=extra_args)
-        
-    def load_string(self, 
+
+    def load_string(self,
                     string_data,
-                    key, 
+                    key,
                     bucket_name=None,
                     replace=False,
                     encrypt=False):
@@ -222,7 +238,7 @@ class S3Hook(AwsHook):
         Loads a string to S3
 
         This is provided as a convenience to drop a string in S3. It uses the
-        boto infrastructure to ship a file to s3. 
+        boto infrastructure to ship a file to s3.
 
         :param string_data: string to set as content for the key.
         :type string_data: str
@@ -239,15 +255,15 @@ class S3Hook(AwsHook):
         """
         if not bucket_name:
             (bucket_name, key) = self.parse_s3_url(key)
-        
+
         if not replace and self.check_for_key(key, bucket_name):
             raise ValueError("The key {key} already exists.".format(key=key))
-        
+
         extra_args={}
         if encrypt:
             extra_args['ServerSideEncryption'] = "AES256"
-        
+
         filelike_buffer = StringIO(string_data)
-        
+
         client = self.get_conn()
         client.upload_fileobj(filelike_buffer, bucket_name, key, ExtraArgs=extra_args)
