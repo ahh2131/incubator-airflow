@@ -92,7 +92,6 @@ def _parse_s3_config(config_file_name, config_format='boto', profile=None):
             raise
         return (access_key, secret_key, calling_format)
 
-
 class S3Hook(BaseHook):
     """
     Interact with S3. This class is a wrapper around the boto library.
